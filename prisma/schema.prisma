@@ -15,16 +15,31 @@ datasource db {
 }
 
 
-model user {
-  id         Int      @default(autoincrement()) @id
-  userName   String
-  email      String
+model User {
+  id         Int    @id @default(autoincrement())
+  userName   String @db.VarChar(255)
+  email      String @unique @db.VarChar(255)
   password   String
   image      String @default("")
   bio        String @default("")
+  article    Article[]
 }
 
-model tags {
-  id        Int      @default(autoincrement()) @id
+model Article {
+  id              Int       @id @default(autoincrement())
+  title           String
+  slug            String
+  description     String    @default("")
+  body            String    @default("")
+  tagList         String[]  @default([])
+  favoritesCount  Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  authorId        Int
+  author          User     @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model Tags {
+  id        Int      @id @default(autoincrement())
   name      String
 }

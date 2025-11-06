@@ -1,10 +1,10 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { user as UserModel } from '@prisma/client';
+import { User as UserModel } from '@prisma/client';
 import { compare, hash } from 'bcrypt';
 import { sign } from 'jsonwebtoken';
-import { PrismaService } from '~/prisma.service';
+import { PrismaService } from '~/prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
-import { createUserDTO, loginUserDTO, UserResponseInterface } from '~/user/user.dto';
+import { createUserDTO, loginUserDTO, updateUserDTO, UserResponseInterface } from '~/user/user.dto';
 
 @Injectable()
 export class UserService {
@@ -80,5 +80,12 @@ export class UserService {
       throw new HttpException('Email or password is not correct', HttpStatus.UNAUTHORIZED);
     }
     return foundUser;
+  }
+  async update(currentUserId: number, body: updateUserDTO) {
+    const updatedUser = this.prisma.user.update({
+      where: { id: currentUserId },
+      data: body,
+    });
+    return updatedUser;
   }
 }
