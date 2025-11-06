@@ -8,12 +8,9 @@ import { User } from '~/user/user.decorator';
 export class UserController {
   constructor(private readonly userService: UserService) {}
   @Get()
-  currentUser(
-    @Req() request: ExpressRequestInterface,
-    @User() user: any
-  ): UserResponseInterface | null {
-    if (!request.user) return null;
-    return this.userService.buildUserResponse(request.user);
+  currentUser(@User() user: any): UserResponseInterface | null {
+    if (!user) return null;
+    return this.userService.buildUserResponse(user);
   }
   @Post('signup')
   async createUser(
