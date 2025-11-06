@@ -1,0 +1,10 @@
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '~/prisma.service';
+
+@Injectable()
+export class TagService {
+  constructor(private prisma: PrismaService) {}
+  findAll(): string[] {
+    return ['coffee'];
+  }
+}
