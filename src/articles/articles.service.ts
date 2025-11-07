@@ -3,13 +3,78 @@ import { createArticlesDTO, updateArticlesDTO } from '~/articles/articles.dto';
 import { PrismaService } from '~/prisma/prisma.service';
 import slugify from 'slugify';
 import { Article } from '@prisma/client';
+import { ArticleResponseInterface } from '~/types/articleResponse.interface';
 
 @Injectable()
 export class ArticlesService {
   constructor(private prisma: PrismaService) {}
-  async getAll() {
-    const articles = await this.prisma.article.findMany();
-    return articles;
+  async getAll(query: any, currentUserId: number): Promise<ArticleResponseInterface> {
+    let authorId: number | undefined;
+    const page = Number(query.page) || 1;
+    const limit = Number(query.limit) || 10;
+
+    const skip = (page - 1) * limit;
+
+    try {
+      if (query.author) {
+        const author = await this.prisma.user.findFirst({
+          where: {
+            userName: query.author,
+          },
+          select: {
+            id: true,
+          },
+        });
+        if (author) {
+          authorId = author.id;
+        }
+      }
+      const [articles, totalCount] = await Promise.all([
+        this.prisma.article.findMany({
+          where: {
+            ...(currentUserId && { authorId: currentUserId }),
+            ...(query.search && {
+              title: {
+                equals: query.search,
+                mode: 'insensitive',
+              },
+            }),
+            ...(query.tag && {
+              tagList: {
+                has: query.tag,
+              },
+            }),
+            ...(query.author && { authorId }),
+          },
+          orderBy: {
+            createdAt: query.sort === 'asc' ? 'asc' : 'desc',
+          },
+          skip,
+          take: limit,
+        }),
+        this.prisma.article.count({
+          where: {
+            ...(currentUserId && { authorId: currentUserId }),
+            ...(query.search && {
+              title: {
+                equals: query.search,
+                mode: 'insensitive',
+              },
+            }),
+            ...(query.tag && {
+              tagList: {
+                has: query.tag,
+              },
+            }),
+            ...(query.author && { authorId }),
+          },
+        }),
+      ]);
+
+      return { articles, articleCount: totalCount };
+    } catch (error) {
+      throw new Error(error.message);
+    }
   }
   async create(currentUserId: number, article: createArticlesDTO): Promise<Article> {
     const slug = this.getSlug(article.title);

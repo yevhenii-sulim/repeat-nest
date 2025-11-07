@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
@@ -13,14 +14,18 @@ import { Article } from '@prisma/client';
 import { createArticlesDTO, updateArticlesDTO } from '~/articles/articles.dto';
 import { ArticlesService } from '~/articles/articles.service';
 import { AuthGuard } from '~/guard/auth.guard';
+import { ArticleResponseInterface } from '~/types/articleResponse.interface';
 import { User } from '~/user/user.decorator';
 
 @Controller('articles')
 export class ArticlesController {
   constructor(private readonly articleService: ArticlesService) {}
   @Get()
-  getAll() {
-    return this.articleService.getAll();
+  getAll(
+    @Query() query: any,
+    @User('id') currentUserId: number
+  ): Promise<ArticleResponseInterface> {
+    return this.articleService.getAll(query, currentUserId);
   }
 
   @Get(':slug')
