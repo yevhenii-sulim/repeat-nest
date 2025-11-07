@@ -28,7 +28,7 @@ model User {
 model Article {
   id              Int       @id @default(autoincrement())
   title           String
-  slug            String
+  slug            String    @unique
   description     String    @default("")
   body            String    @default("")
   tagList         String[]  @default([])
@@ -37,6 +37,7 @@ model Article {
   updatedAt       DateTime  @updatedAt
   authorId        Int
   author          User     @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  @@unique([authorId, slug])
 }
 
 model Tags {

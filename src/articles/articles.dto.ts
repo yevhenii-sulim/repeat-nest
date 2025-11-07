@@ -9,3 +9,10 @@ export class createArticlesDTO {
   readonly body: string;
   readonly tagList?: string[];
 }
+
+export class updateArticlesDTO {
+  readonly title: string;
+  readonly description: string;
+  readonly body: string;
+  readonly tagList: string[];
+}
