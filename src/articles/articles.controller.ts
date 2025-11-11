@@ -54,4 +54,12 @@ export class ArticlesController {
   ) {
     return this.articleService.update(currentUserId, slug, data);
   }
+  @Post(':slug/favorite')
+  @UseGuards(AuthGuard)
+  getArticleToFavorite(
+    @User('id') currentUser: number,
+    @Param('slug') slug: string
+  ): Promise<Article> {
+    return this.articleService.getArticleToFavorite(currentUser, slug);
+  }
 }

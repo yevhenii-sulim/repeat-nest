@@ -8,6 +8,7 @@ import { ArticleResponseInterface } from '~/types/articleResponse.interface';
 @Injectable()
 export class ArticlesService {
   constructor(private prisma: PrismaService) {}
+
   async getAll(query: any, currentUserId: number): Promise<ArticleResponseInterface> {
     let authorId: number | undefined;
     const page = Number(query.page) || 1;
@@ -46,6 +47,7 @@ export class ArticlesService {
             }),
             ...(query.author && { authorId }),
           },
+          include: { favoriteBy: query.favorites && true },
           orderBy: {
             createdAt: query.sort === 'asc' ? 'asc' : 'desc',
           },
@@ -133,6 +135,49 @@ export class ArticlesService {
       return updatedArticle;
     } catch (error) {
       throw new HttpException('have no permission', HttpStatus.FORBIDDEN);
+    }
+  }
+  async getArticleToFavorite(currentUserId: number, slug: string): Promise<any> {
+    try {
+      const article = await this.search(slug);
+      if (!article) {
+        throw new HttpException('article not found', HttpStatus.NOT_FOUND);
+      }
+      const isLiked = await this.prisma.favorite.findUnique({
+        where: {
+          userId_articleId: { userId: currentUserId, articleId: article.id },
+        },
+      });
+      if (!isLiked) {
+        const created = await this.prisma.$transaction([
+          this.prisma.favorite.create({
+            data: {
+              userId: currentUserId,
+              articleId: article.id,
+            },
+          }),
+          this.prisma.article.update({
+            where: { id: article.id },
+            data: { favoritesCount: { increment: 1 } },
+          }),
+        ]);
+        return created[1];
+      } else {
+        const deleted = await this.prisma.$transaction([
+          this.prisma.favorite.delete({
+            where: {
+              userId_articleId: { userId: currentUserId, articleId: article.id },
+            },
+          }),
+          this.prisma.article.update({
+            where: { id: article.id },
+            data: { favoritesCount: { decrement: 1 } },
+          }),
+        ]);
+        return deleted[1];
+      }
+    } catch (error) {
+      return error;
     }
   }
 }

@@ -23,6 +23,7 @@ model User {
   image      String @default("")
   bio        String @default("")
   article    Article[]
+  favorites  Favorite[] 
 }
 
 model Article {
@@ -36,9 +37,23 @@ model Article {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   authorId        Int
-  author          User     @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  author          User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  favoriteBy      Favorite[]
   @@unique([authorId, slug])
 }
+
+model Favorite {
+  userId     Int
+  articleId  Int
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id])
+  article    Article  @relation(fields: [articleId], references: [id])
+
+  @@id([userId, articleId])
+  @@map("users_favorites_articles")
+}
+
 
 model Tags {
   id        Int      @id @default(autoincrement())
